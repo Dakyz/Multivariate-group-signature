@@ -2,7 +2,7 @@ import sys
 
 sys.path.append("gui/")
 from widgets import *
-from constants import Constants
+from src.constants import Constants
 tk.set_appearance_mode("light")
 tk.set_default_color_theme("blue")
 

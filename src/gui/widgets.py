@@ -3,7 +3,7 @@ from itertools import count
 from tkinter import ttk
 import customtkinter as tk
 from PIL import Image
-from constants import Constants
+from src.constants import Constants
 
 class Entry(ttk.Entry):
 
