@@ -1,6 +1,6 @@
 from abc import ABC,abstractmethod
 
-class GroupSignature(ABC):
+class GroupSignatureInterface(ABC):
 
     @abstractmethod
     def setup(self):
