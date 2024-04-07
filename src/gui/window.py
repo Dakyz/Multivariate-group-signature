@@ -12,7 +12,8 @@ class Window:
         self.root = tk.CTk()
         self.root.title("Company Interaction")
         self.root.option_add("*tearOff", False)
-        self.root.geometry("1800x800")
+        self.root.geometry("1400x600")
+        self.root.resizable(False, False)
 
         main_frame = tk.CTkFrame(self.root)
         main_frame.grid(row=0, column=0, sticky="nswe")
@@ -30,30 +31,44 @@ class Window:
         main_frame.columnconfigure(1, weight=1)
         main_frame.rowconfigure(0, weight=1)
 
-        self.create_company(self.left_frame)
-        self.create_company(self.right_frame)
+        self.create_company(self.left_frame, 1)
+        self.create_company(self.right_frame, 2)
 
         separator = ttk.Separator(self.root, orient='vertical')
         separator.place(relx=0.5, rely=0, relheight=1)
 
         self.root.after(50, lambda: self.center(self.root))
 
-    def create_company(self, master):
-        manager = ManagerButton(master=master)
+    def create_company(self, master, group_id):
+        manager = ManagerButton(master=master, on_click=self.on_manager_click, group_id=group_id)
         manager.grid(row=0, column=1)
 
-        user1 = UserButton(master=master)
+        user1 = UserButton(master=master, on_click=self.on_user_click, group_id=group_id)
         user1.grid(row=1, column=0)
 
-        user2 = UserButton(master=master)
+        user2 = UserButton(master=master, on_click=self.on_user_click, group_id=group_id)
         user2.grid(row=1, column=1)
 
-        user3 = UserButton(master=master)
+        user3 = UserButton(master=master, on_click=self.on_user_click, group_id=group_id)
         user3.grid(row=1, column=2)
 
         for i in range(3):
             master.rowconfigure(i, weight=1)
             master.columnconfigure(i, weight=1)
+
+    def on_user_click(self, id):
+        print(f"User {id} clicked")
+        top_level = tk.CTkToplevel(master=self.root)
+        top_level.title(f"User {id} Menu")
+        top_level.geometry("600x600")
+        self.root.after(20, lambda: self.center(top_level))
+
+    def on_manager_click(self):
+        print(f"Manager clicked")
+        top_level = tk.CTkToplevel(master=self.root)
+        top_level.title(f"Manager Menu")
+        top_level.geometry("600x600")
+        self.root.after(20, lambda: self.center(top_level))
 
     def mainloop(self):
         self.root.mainloop()
