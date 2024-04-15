@@ -61,6 +61,32 @@ class Window:
         top_level = tk.CTkToplevel(master=self.root)
         top_level.title(f"User {id} Menu")
         top_level.geometry("600x600")
+
+        params_label = tk.CTkLabel(
+            master=top_level,
+            text="Parameters:",
+            font=("Times", 24, 'bold'),
+        )
+        params_label.place(
+            relx=0.1,
+            rely=0.05
+        )
+
+        params = Treeview(
+            master=top_level,
+            columns=["Param", "Value"]
+        )
+        params.place(
+            relx=0.1,
+            rely=0.1
+        )
+
+        file_choose_entry = FileChooseEntry(master=top_level)
+        file_choose_entry.place(
+            relx=0.1,
+            rely=0.72
+        )
+
         self.root.after(20, lambda: self.center(top_level))
 
     def on_manager_click(self):
