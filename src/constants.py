@@ -9,3 +9,15 @@ class Constants:
 
     # general constants
     COMPANIES_CNT = 2
+
+    # group signature parameters
+    q = 2
+    m = 3
+    n = 4
+    rounds = 70
+
+    # contracts signature parameters
+    low_bound_k = 2 ** 159
+    up_bound_k = 2 ** 160 - 200
+    low_bound_n = 2 ** 860
+    up_bound_n = 2 ** 864
