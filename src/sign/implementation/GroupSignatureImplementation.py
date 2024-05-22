@@ -93,7 +93,6 @@ class GroupSignatureImplementation(object):
         return self.to_poly(self.mapping(n, self.T_matrix, elem))
 
     def F(self, elem):  # central map n -> m
-        # TODO: F
         nums = self.from_poly(elem, n)
         new = []
         for i in range(m):
@@ -109,10 +108,11 @@ class GroupSignatureImplementation(object):
     def T_(self, elem):  # n -> n
         return self.to_poly(self.mapping(n, self.T_inv, elem))
 
-    def F_(self, elem):  # central map n <- m
-        # TODO: F_
+    def F_(self, elem, mode):  # central map n <- m
         v = self.F_matrix.solve_right(vector(GF(q), self.from_poly(elem, m)))
         res = list(map(ZZ, list(v)))
+        if mode == 1:
+            res = self.from_poly(self.to_poly(self.from_int(self.to_int(0,1,res)^self.F_helper)), n)
         return self.to_poly(res)
 
     def R(self, elem):  # m -> m
@@ -120,10 +120,10 @@ class GroupSignatureImplementation(object):
 
 
     def P(self, elem):  # S x F x T n -> m
-        return self.T(self.F(self.S(elem)))
+        return self.S(self.F(self.T(elem)))
 
-    def P_(self, elem):  # opposite m -> n
-        return self.S_(self.F_(self.T_(elem)))
+    def P_(self, elem, mode):  # opposite m -> n
+        return self.T_(self.F_(self.S_(elem), mode))
 
     def P__(self, elem):  # P + R
         return GF(q ** m, 'x')(str(SR(str(self.P(self.to_poly(self.from_poly(elem, n + m)[:n])))
@@ -212,7 +212,20 @@ class GroupSignatureImplementation(object):
                 break
             except:
                 continue
-        self.F_matrix = Matrix(GF(q, 'x'), [self.new_row(GF(q, 'x'), n) for i in range(m)])
+
+        while 1:
+            try:
+                self.F_matrix = Matrix(GF(q, 'x'), [self.new_row(GF(q, 'x'), n) for i in range(m)])
+                [self.F_matrix.solve_right(vector(GF(q), (self.from_poly(self.to_poly(self.from_int(i)), m)))) for i in
+                 range(q ** m)]
+                break
+            except:
+                continue
+        for i in range(1, 2 ** n):
+            lin = list(map(ZZ, list(self.F_matrix * vector(GF(q), self.from_poly(self.to_poly(self.from_int(i)), n)))))
+            if self.to_int(0, 1, lin) == 0:
+                self.F_helper = i
+                break
         self.rep = Repository()
 
     def sign(self, msk, msg):
@@ -291,35 +304,29 @@ class GroupSignatureImplementation(object):
         # parsing
 
         for i in range(rounds):
-            # TODO: ctrl+alt+l
             # step 3
             gam1 = self.to_poly((sign[3][i][0])[:n])
             gam2 = self.to_poly((sign[3][i][1])[:n])
             if chl == 0:
-                if sign[0][i][0] != (sign[3][i][0],
-                                     self.from_poly(GF(q ** (n + m), 'x')(
-                                         a * self.to_poly(sign[3][i][0]) - self.to_poly(sign[2][i][0])), n + m),
+                if sign[0][i][0] != (sign[3][i][0], self.from_poly(
+                        GF(q ** (n + m), 'x')(a * self.to_poly(sign[3][i][0]) - self.to_poly(sign[2][i][0])), n + m),
                                      self.from_poly(
-                                         a * self.P__(self.to_poly(sign[3][i][0])) - self.to_poly(sign[2][i][1]), m),
-                                     sign[3][i][1]):
+                                             a * self.P__(self.to_poly(sign[3][i][0])) - self.to_poly(sign[2][i][1]),
+                                             m), sign[3][i][1]):
                     return 0
                 if self.from_poly(self.P(gam1 + gam2), n) != sign[1][i][0] or self.from_poly(self.P(gam2), n) != \
-                        sign[1][i][1] or \
-                        self.H(self.to_int(gam1 + gam2, n, 0)) != sign[1][i][4] or self.H(self.to_int(gam2, n, 0)) != \
-                        sign[1][i][5]:
+                        sign[1][i][1] or self.H(self.to_int(gam1 + gam2, n, 0)) != sign[1][i][4] or self.H(
+                        self.to_int(gam2, n, 0)) != sign[1][i][5]:
                     return 0
             elif chl == 1:
-                if sign[0][i][1] != (sign[3][i][0],
-                                     self.from_poly(a * (self.k - self.P__(self.to_poly(sign[3][i][0])) + self.P__(0)) -
-                                                    self.linear_map(self.to_poly(sign[2][i][0]),
-                                                                    self.to_poly(sign[3][i][0])) - self.to_poly(
-                                         sign[2][i][1]), m),
-                                     sign[3][i][1]):
+                if sign[0][i][1] != (sign[3][i][0], self.from_poly(
+                        a * (self.k - self.P__(self.to_poly(sign[3][i][0])) + self.P__(0)) - self.linear_map(
+                                self.to_poly(sign[2][i][0]), self.to_poly(sign[3][i][0])) - self.to_poly(sign[2][i][1]),
+                        m), sign[3][i][1]):
                     return 0
                 if self.from_poly(self.P(gam1 + gam2), n) != sign[1][i][2] or self.from_poly(self.P(gam2), n) != \
-                        sign[1][i][3] or self.H(
-                        self.to_int(gam1 + gam2, n, 0)) != sign[1][i][6] or self.H(self.to_int(gam2, n, 0)) != \
-                        sign[1][i][7]:
+                        sign[1][i][3] or self.H(self.to_int(gam1 + gam2, n, 0)) != sign[1][i][6] or self.H(
+                        self.to_int(gam2, n, 0)) != sign[1][i][7]:
                     return 0
 
         # step 4
@@ -331,18 +338,28 @@ class GroupSignatureImplementation(object):
         # step 1
         # parsing
         # resp = sign[1]
-        # TODO: pogovotim potom
         users = []
         for i in range(rounds):
             # step 2
-            del20 = self.P_(self.to_poly(sign[1][i][1]))
-            del21 = self.P_(self.to_poly(sign[1][i][3]))
-            del10 = self.P_(self.to_poly(sign[1][i][0])) - del20
-            del11 = self.P_(self.to_poly(sign[1][i][2])) - del21
-            # hash verify?
+            del20 = self.P_(self.to_poly(sign[1][i][1]),0)
+            del21 = self.P_(self.to_poly(sign[1][i][3]),0)
+            if self.H(self.to_int(del20, n, 0)) != sign[1][i][5]:
+                del20 = self.P_(self.to_poly(sign[1][i][1]),1)
+            if self.H(self.to_int(del21, n, 0)) != sign[1][i][7]:
+                del21 = self.P_(self.to_poly(sign[1][i][3]),1)
+
+            del10 = self.P_(self.to_poly(sign[1][i][0]),0)
+            if self.H(self.to_int(del10, n, 0)) != sign[1][i][4]:
+                del10 = self.P_(self.to_poly(sign[1][i][0]),1)
+            del10 -= del20
+
+            del11 = self.P_(self.to_poly(sign[1][i][2]),0)
+            if self.H(self.to_int(del11, n, 0)) != sign[1][i][6]:
+                del11 = self.P_(self.to_poly(sign[1][i][2]),1)
+            del11 -= del21
 
             # step 3
-            nu = (del10 + del11, sign[0][i][0][0], sign[0][i][1][0])
+            nu = del10 + del11
 
             # step 4
             for user in table:
@@ -358,7 +375,7 @@ class GroupSignatureImplementation(object):
         # join for one user
         u = GF(q ** m, 'x').random_element()
         k_ = self.k - self.R(u)
-        s = self.P_(k_)
+        s = self.P_(k_, 0)
         # s_ = from_poly(s, n) + from_poly(u, m) # msk = (u, s_) весь мск есть этот полином
         s_ = self.to_poly(self.from_poly(s, n) + self.from_poly(u, m))  # это в виде полинома
         self.rep.add_user(id_, s_)
