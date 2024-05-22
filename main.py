@@ -1,4 +1,4 @@
-from gui.window import Window
+from src.gui.window import Window
 
 
 def main():

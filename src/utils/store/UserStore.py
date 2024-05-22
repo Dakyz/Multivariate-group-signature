@@ -3,7 +3,7 @@ from names_generator import generate_name
 import sqlite3
 import pickle
 
-class Store:
+class UserStore:
 
     def __init__(self):
         self.connection = sqlite3.connect(Constants.DB_NAME)

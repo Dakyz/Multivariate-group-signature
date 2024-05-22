@@ -1,10 +1,21 @@
 from src.sign.interfaces.GroupSignatureInterface import GroupSignatureInterface
 from sage.all import *
-from sympy import symbols, Poly
+from sympy import Poly
 from collections import Counter
 from src.utils.Repository import Repository
+from src.constants import Constants
 
-class GroupSignatureImplementation(GroupSignatureInterface):
+q = Constants.q
+n = Constants.n
+m = Constants.m
+rounds = Constants.rounds
+low_bound_k = Constants.low_bound_k
+low_bound_n = Constants.low_bound_n
+up_bound_k = Constants.up_bound_k
+up_bound_n = Constants.up_bound_n
+
+x = var("x")
+class GroupSignatureImplementation(object):
 
     # GF -> len -> [rand_elem_GF]
     @staticmethod
@@ -107,11 +118,6 @@ class GroupSignatureImplementation(GroupSignatureInterface):
     def R(self, elem):  # m -> m
         return self.to_poly(self.mapping(m, self.R_matrix, elem))
 
-    @staticmethod
-    def H(elem):  # [0,1]**n -> [0,1]**n
-        # TODO: hash44
-        new = (elem * 3 + 12) % 2 ** (n + 1)
-        return [0] * (n - len(bin(new)[2:])) + GroupSignatureImplementation.from_int(new)
 
     def P(self, elem):  # S x F x T n -> m
         return self.T(self.F(self.S(elem)))
@@ -122,12 +128,69 @@ class GroupSignatureImplementation(GroupSignatureInterface):
     def P__(self, elem):  # P + R
         return GF(q ** m, 'x')(str(SR(str(self.P(self.to_poly(self.from_poly(elem, n + m)[:n])))
                                       + ' + ' + str(self.R(self.to_poly(self.from_poly(elem, n + m)[-m:])))).expand()))
+    @staticmethod
+    def hash(m, f):
+        """
+        :param m: message
+        :param f: irreducible poly of degree k over GF(2)
+
+        :return: hash value
+        """
+        def int_to_bits(n):
+            return [int(digit) for digit in bin(n)[2:]]
+
+        def bits_to_int(bitlist):
+            out = 0
+            for bit in bitlist:
+                out = (out << 1) | bit
+            return out
+
+        # m' = k * m + b
+        k = 2 ** 69 + 127
+        b = 127
+        m_ = k * m + b
+
+        m_bits = int_to_bits(m_)
+        F = GF(2)
+        R = PolynomialRing(F, "x")
+
+        f_ring = R(f)
+        m_ring = R(m_bits)
+
+        # m(x) = f(x) * d(x) + r(x)
+        r_ring = m_ring % f_ring
+        r_bits = [int(i) for i in r_ring.list()]
+
+        return bits_to_int(r_bits)
+
+    @staticmethod
+    def H(m):
+        f = x ** 4 + x + 1
+
+        return GroupSignatureImplementation.hash(m, f)
+    @staticmethod
+    def H1(m):
+        return GroupSignatureImplementation.hash(m, f)
+
+    @staticmethod
+    def H2(m):
+        f = x ** 70 + x ** 5 + x ** 3 + x + 1
+
+        return GroupSignatureImplementation.hash(m, f)
+
+    @staticmethod
+    def H3(m):
+        f = x ** 70 + x ** 68 + x ** 66 + x ** 61 + x ** 60 + x ** 55 + x ** 54 + x ** 53 + x ** 50 + x ** 47 + \
+            x ** 46 + x ** 45 + x ** 43 + x ** 38 + x ** 36 + x ** 34 + x ** 32 + x ** 31 + x ** 29 + x ** 28 + \
+            x ** 19 + x ** 17 + x ** 16 + x ** 15 + x ** 14 + x ** 9 + x ** 7 + x + 1
+
+        return GroupSignatureImplementation.hash(m, f)
 
     def linear_map(self, a, b):
         return self.P__(a + b) - self.P__(a) - self.P__(b) + self.P__(0)
 
     def setup(self):
-        k = GF(q ** m, 'x').random_element()
+        self.k = GF(q ** m, 'x').random_element()
         while 1:
             try:
                 self.S_matrix = Matrix(GF(q, 'x'), [self.new_row(GF(q, 'x'), m) for i in range(m)])
@@ -150,13 +213,7 @@ class GroupSignatureImplementation(GroupSignatureInterface):
             except:
                 continue
         self.F_matrix = Matrix(GF(q, 'x'), [self.new_row(GF(q, 'x'), n) for i in range(m)])
-        # TODO: join method another blin
-        # join(1)
-        # join(2)
-        # join(3)
         self.rep = Repository()
-
-        # return 0
 
     def sign(self, msk, msg):
         # TODO: hash1

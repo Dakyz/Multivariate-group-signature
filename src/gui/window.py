@@ -1,9 +1,10 @@
 import sys
 
 from src.utils.Repository import Repository
+from src.utils.Utils import Utils
 
 sys.path.append("gui/")
-from widgets import *
+from src.gui.widgets import *
 from src.constants import Constants
 tk.set_appearance_mode("light")
 tk.set_default_color_theme("blue")
@@ -20,6 +21,7 @@ class Window:
 
         # singleton instance for db interaction
         self.repository = Repository()
+        self.utils = Utils()
 
         main_frame = tk.CTkFrame(self.root)
         main_frame.grid(row=0, column=0, sticky="nswe")
@@ -39,8 +41,8 @@ class Window:
         main_frame.rowconfigure(0, weight=1)
 
         # create
-        self.create_company(self.left_frame, 1)
-        self.create_company(self.right_frame, 2)
+        self.create_company(self.left_frame, 0)
+        self.create_company(self.right_frame, 1)
 
         # widget for company separation
         separator = ttk.Separator(self.root, orient='vertical')
@@ -53,6 +55,9 @@ class Window:
         # create manager
         manager = ManagerButton(master=master, on_click=self.on_manager_click, group_id=group_id)
         manager.grid(row=0, column=1)
+        self.repository.add_company(group_id)
+        company = self.utils.get_group_scheme(0)
+        company.setup()
 
         # create 3 users
         for i in range(3):
@@ -65,7 +70,7 @@ class Window:
 
             # create user params in db
             # TODO: set real sk
-            self.repository.add_user(user.id, 1)
+            company.join(i)
 
             # configure correct grid
             master.rowconfigure(i, weight=1)
@@ -76,7 +81,7 @@ class Window:
         print(f"User {id} clicked")
         top_level = tk.CTkToplevel(master=self.root)
         top_level.title(f"User {id} Menu")
-        top_level.geometry("600x600")
+        top_level.geometry("800x600")
 
         params_label = tk.CTkLabel(
             master=top_level,
@@ -101,6 +106,9 @@ class Window:
         )
         params.insertion(
             "Email", self.repository.get_user_emai(id)
+        )
+        params.insertion(
+            "Key", self.repository.get_user_sk(id)
         )
 
         file_choose_entry = FileChooseEntry(master=top_level)
