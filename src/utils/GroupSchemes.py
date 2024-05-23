@@ -2,7 +2,7 @@ from src.utils.Singleton import Singleton
 from src.constants import Constants
 from src.sign.implementation.GroupSignatureImplementation import GroupSignatureImplementation
 
-class Utils(metaclass=Singleton):
+class GroupSchemes(metaclass=Singleton):
 
     def __init__(self):
         self._group_schemes = []

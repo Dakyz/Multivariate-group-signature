@@ -22,21 +22,25 @@ class UserStore:
             email text not null,
             
             -- serialized secret key
-            u BLOB not null
+            u BLOB not null,
+            
+            -- serialized public key
+            s BLOB not null
             )
             """
         )
         self.connection.commit()
 
-    def add_user(self, id: int, sk):
+    def add_user(self, id: int, sk, pk):
         try:
             self.cursor.execute(
-                'insert into USERS (id, username, email, u) values (?, ?, ?, ?)',
+                'insert into USERS (id, username, email, u, s) values (?, ?, ?, ?, ?)',
                 (
                     id,
                     generate_name(style='capital', seed=id),
                     f'{generate_name(seed=id)}_{id}@email.com',
-                    pickle.dumps(sk)
+                    pickle.dumps(sk),
+                    pickle.dumps(pk)
                 )
             )
         except sqlite3.IntegrityError:
@@ -52,6 +56,13 @@ class UserStore:
             )
         )
         self.connection.commit()
+
+    def get_all_pk(self):
+        all_pk = self.cursor.execute(
+            'select s from USERS',
+        ).fetchall()
+
+        return [pickle.loads(pk[0]) for pk in all_pk]
 
     def get_username(self, id):
         return self.cursor.execute(
@@ -73,6 +84,16 @@ class UserStore:
         return pickle.loads(
             self.cursor.execute(
                 'select u from USERS where id=?',
+                (
+                    id,
+                )
+            ).fetchone()[0]
+        )
+
+    def get_user_pk(self, id):
+        return pickle.loads(
+            self.cursor.execute(
+                'select s from USERS where id=?',
                 (
                     id,
                 )

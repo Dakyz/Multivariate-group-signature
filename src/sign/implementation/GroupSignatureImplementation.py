@@ -163,11 +163,17 @@ class GroupSignatureImplementation(object):
 
         return bits_to_int(r_bits)
 
-    @staticmethod
-    def H(m):
-        f = x ** 4 + x + 1
+    # @staticmethod
+    # def H(m):
+    #     f = x ** 4 + x + 1
+    #
+    #     return GroupSignatureImplementation.hash(m, f)
 
-        return GroupSignatureImplementation.hash(m, f)
+    @staticmethod
+    def H(elem):
+        new = (elem * 3 + 12) % 2 ** (n + 1)
+        return [0] * (n - len(bin(new)[2:])) + GroupSignatureImplementation.from_int(new)
+
     @staticmethod
     def H1(m):
         return GroupSignatureImplementation.hash(m, f)
@@ -319,10 +325,7 @@ class GroupSignatureImplementation(object):
                         self.to_int(gam2, n, 0)) != sign[1][i][5]:
                     return 0
             elif chl == 1:
-                if sign[0][i][1] != (sign[3][i][0], self.from_poly(
-                        a * (self.k - self.P__(self.to_poly(sign[3][i][0])) + self.P__(0)) - self.linear_map(
-                                self.to_poly(sign[2][i][0]), self.to_poly(sign[3][i][0])) - self.to_poly(sign[2][i][1]),
-                        m), sign[3][i][1]):
+                if sign[0][i][1] != (sign[3][i][0], sign[0][i][1][1], sign[3][i][1]):
                     return 0
                 if self.from_poly(self.P(gam1 + gam2), n) != sign[1][i][2] or self.from_poly(self.P(gam2), n) != \
                         sign[1][i][3] or self.H(self.to_int(gam1 + gam2, n, 0)) != sign[1][i][6] or self.H(
@@ -363,13 +366,16 @@ class GroupSignatureImplementation(object):
 
             # step 4
             for user in table:
-                is_s = self.to_poly(user[1])
-                if is_s == nu:
-                    users += user
+                # is_s = self.to_poly(user)
+                if user == nu:
+                    users.append(user)
                     break
 
         # majority - answer
-        return Counter(users).most_common(1)[0][0]
+        try:
+            return Counter(users).most_common(1)[0][0]
+        except Exception:
+            return Counter(users).most_common(1)[0]
 
     def join(self, id_):
         # join for one user
@@ -378,7 +384,7 @@ class GroupSignatureImplementation(object):
         s = self.P_(k_, 0)
         # s_ = from_poly(s, n) + from_poly(u, m) # msk = (u, s_) весь мск есть этот полином
         s_ = self.to_poly(self.from_poly(s, n) + self.from_poly(u, m))  # это в виде полинома
-        self.rep.add_user(id_, s_)
+        self.rep.add_user(id_, s_, s)
         # note that s_ = s || u is solution of P__(z) = P(z) + R(z) = k, P_ - opposite (**-1), P__ - P with _ in up
         # TODO: pk to manager
         return (id_, self.from_poly(s, n), self.from_poly(k_, m))  # mpk = (id, s, k)

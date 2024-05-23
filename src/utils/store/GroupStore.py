@@ -22,7 +22,13 @@ class GroupStore:
             S BLOB,
             
             -- group signature
-            g BLOB
+            g BLOB,
+            
+            -- serialized one time key
+            t BLOB,
+            
+            -- hash
+            E blob
             )
             """
         )
@@ -58,20 +64,62 @@ class GroupStore:
         )
         self.connection.commit()
 
-    def add_company(self, id, R, S, g):
+    def update_t(self, id, t):
+        self.cursor.execute(
+            'update COMPANIES set t = ? where id=?',
+            (
+                pickle.dumps(t),
+                id
+           )
+        )
+        self.connection.commit()
+
+    def update_E(self, id, E):
+        self.cursor.execute(
+            'update COMPANIES set E = ? where id=?',
+            (
+                pickle.dumps(E),
+                id
+           )
+        )
+        self.connection.commit()
+
+    def add_company(self, id, R, S, g, t, E):
         try:
             self.cursor.execute(
-                'insert into COMPANIES (id, R, S, g) values (?, ?, ?, ?)',
+                'insert into COMPANIES (id, R, S, g, t, E) values (?, ?, ?, ?, ?, ?)',
                 (
                     id,
                     pickle.dumps(R),
                     pickle.dumps(S),
                     pickle.dumps(g),
+                    pickle.dumps(t),
+                    pickle.dumps(E),
                 )
             )
         except sqlite3.IntegrityError:
             print(f"Company {id} is already in db")
         self.connection.commit()
+
+    def get_E(self, id):
+        return pickle.loads(
+            self.cursor.execute(
+                'select E from COMPANIES where id=?',
+                (
+                    id,
+                )
+            ).fetchone()[0]
+        )
+
+    def get_t(self, id):
+        return pickle.loads(
+            self.cursor.execute(
+                'select t from COMPANIES where id=?',
+                (
+                    id,
+                )
+            ).fetchone()[0]
+        )
 
     def get_R(self, id):
         return pickle.loads(

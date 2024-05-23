@@ -6,7 +6,7 @@ from PIL import Image
 from src.constants import Constants
 
 class UserButton(tk.CTkButton):
-    _ids = count(1)
+    _ids = count(0)
     @staticmethod
     def get_image_path():
         return Constants.PATH_TO_WORKER_RES
@@ -44,7 +44,7 @@ class Treeview(ttk.Treeview):
         for _ in columns:
             counts.append("#{0}".format(self.count))
             self.count += 1
-        ttk.Treeview.__init__(self, columns=columns, show="headings", master=master, height=13)
+        ttk.Treeview.__init__(self, columns=columns, show="headings", master=master)
         for q in range(len(columns)):
             self.heading(counts[q], text=columns[q])
             self.column(counts[q], anchor="center", width=200)
@@ -74,8 +74,8 @@ class Treeview(ttk.Treeview):
             sticky=tk.NSEW
         )
     def place(self, relx, rely):
-        super().place(relx=relx, rely=rely, relwidth=self.count * 0.217, relheight=0.6)
-        self.tree_scroll.place(relx=relx + self.count * 0.217 + 0.001, rely=rely, relheight=0.6)
+        super().place(relx=relx, rely=rely, relwidth=self.count * 0.217, relheight=0.4)
+        self.tree_scroll.place(relx=relx + self.count * 0.217 + 0.001, rely=rely, relheight=0.4)
         
     def pack(self):
         super().pack()
@@ -87,11 +87,13 @@ class Treeview(ttk.Treeview):
 
 class FileChooseEntry(tk.CTkEntry):
 
-    def __init__(self, master):
+    def __init__(self, master, id, callback, text):
+        self.id = id
+        self.callback = callback
         super().__init__(master=master)
         self.label = tk.CTkLabel(
             master=master,
-            text="Choose file"
+            text=text,
         )
         self.button = tk.CTkButton(
             master=master,
@@ -105,6 +107,7 @@ class FileChooseEntry(tk.CTkEntry):
             return
         self.delete(0, END)
         self.insert(0, filename)
+        self.callback(self.id, filename)
     def grid(self, row, column):
         self.label.grid(
             row=row,
