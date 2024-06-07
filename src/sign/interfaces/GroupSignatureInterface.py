@@ -7,17 +7,17 @@ class GroupSignatureInterface(ABC):
         pass
 
     @abstractmethod
-    def sign(self):
+    def sign(self, msk, msg):
         pass
 
     @abstractmethod
-    def verify(self):
+    def verify(self, msg, sign):
         pass
 
     @abstractmethod
-    def open(self):
+    def open(self, sign, table):
         pass
 
     @abstractmethod
-    def join(self):
+    def join(self, id_):
         pass
