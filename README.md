@@ -6,12 +6,12 @@ Group signature scheme based on multivariate public key cryptography
     + A Multivariate Convertible Group Signature Scheme 
 
 
-## Julia installation
-```
-winget install julia -s msstore
+## Dependencies installation
+```bash
+pip install -r requirements.txt
 ```
 
-## Run Julia
-```
-julia
+## Usage
+```bash
+python3 main.py
 ```
